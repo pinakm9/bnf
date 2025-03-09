@@ -1,0 +1,5 @@
+data/L96/*.csv
+data/L96/*.npy
+data/KS-200/*.csv
+data/KS-200/*.npy
+*.DS_Store
