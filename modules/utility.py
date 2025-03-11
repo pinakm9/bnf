@@ -51,7 +51,7 @@ def smooth(y, box_pts=10):
 
 def save(model, file_path, step=None):
     data = copy.deepcopy(model.__dict__)
-    ck.save_checkpoint(file_path, model.params_, step=step)
+    ck.save_checkpoint(file_path, model.params_, step=step, overwrite=True)
     with open(f'{file_path}/attrs.pkl', 'wb') as f:
         data.pop('params_')
         pickle.dump(data, f)

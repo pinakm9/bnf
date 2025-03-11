@@ -62,3 +62,24 @@ def npy2csv(npy_file, sep=int(1e5), index=0, I=10, dt=1):
                 # Save to CSV
                 df.to_csv(npy_file.replace(".npy", ".csv").replace("train", name + f"_{index}"), index=False)
     print(f"Time taken: {time.time() - start_time:.2f} seconds")
+
+
+def arr2csv(data, index=0, I=10, t0=0, dt=0.01, filename="./train"):
+    start_time = time.time()
+    ii = (index + np.arange(-I, I+1).astype(int)) % data.shape[0]
+    data_x = data[ii, :-1]
+    data_y = data[index, 1:]
+    
+    space_dim, time_steps = data_x.shape
+    
+    # Create column names
+    column_names = [f"Space_{i}" for i in range(space_dim)]
+    df = pd.DataFrame(data_x.T, columns=column_names)
+    
+    # Add a time column
+    df.insert(0, "Time", (t0 + np.arange(time_steps)) * dt)
+    df["Output"] = data_y 
+    
+    # Save to CSV
+    df.to_csv(filename, index=False)
+    print(f"Time taken to produce csv file: {time.time() - start_time:.2f} seconds")
