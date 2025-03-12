@@ -10,6 +10,7 @@ import os
 import json
 import wasserstein
 import torch
+import time
 import absl.logging
 absl.logging.set_verbosity(absl.logging.ERROR)
 
@@ -29,9 +30,12 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     # del data
     std = data.std(axis=1)
     # train model
+    start = time.time()
     model = bayesnf.BayesianNeuralFieldMAP(**bnf_kwargs)
     df_train = pd.read_csv(f"{train_kwargs['save_folder']}/train.csv")
-    model.fit(df_train, seed=jax.random.PRNGKey(0), num_epochs=train_kwargs["epochs"])
+    model_seed = jax.random.PRNGKey(0)
+    model.fit(df_train, seed=model_seed, num_epochs=train_kwargs["epochs"])
+    end = time.time()
 
     # save model
     ut.save(model, os.path.abspath(f"{train_kwargs['save_folder']}/bnf_model"), step=train_kwargs["epochs"])
@@ -70,7 +74,64 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     B = torch.tensor(Y0.T[:eval_kwargs["n_sample_w2"]], dtype=torch.float32)
     results["W2"] = wasserstein.sinkhorn_div(A, B).item()
 
+    # add model size and training time
+    results["training_time"] = end - start
+    results["model_size"] = int(ut.count_params(model))
+    results["experiment_seed"] = data_gen_kwargs["train_seed"]
+    # results["model_seed"] = model_seed
+
     # save results
     with open(f"{train_kwargs['save_folder']}/results.json", "w") as f:
         json.dump(results, f)
 
+
+
+
+def get_autonomous_params(root, D_r=256):
+    feature_cols = [f"Space_{i}" for i in range(2*train_kwargs["I"]+1)]
+    bnf_kwargs   = {"width": D_r,
+                    "depth": 2,
+                    "freq": None,
+                    "seasonality_periods": None,
+                    "num_seasonal_harmonics": None,
+                    "feature_cols": [f"Space_{i}" for i in range(9)],
+                    "target_col": "Output",
+                    "observation_model": 'NORMAL',
+                    "timetype": 'float',
+                    "standardize":  None,
+                    "interactions": [(i, j) for i in range(len(feature_cols)) for j in range(len(feature_cols)) if i < j]}
+    data_gen_kwargs = {"dt": 1e-2, "train_size": int(2e5), "train_seed": np.random.randint(1e6), "test_num": 1}
+    train_kwargs = {'save_folder': f"{root}/autonomous", "epochs": 5000, "I": 4}
+    eval_kwargs = {"vpt_steps": 500, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
+                "Lyapunov_time": 1/2.27, "n_sample_w2": 20000}
+    return bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs
+
+
+def get_nonautonomous_params(root, D_r=256):
+    feature_cols = ["Time"] + [f"Space_{i}" for i in range(2*train_kwargs["I"]+1)]
+    bnf_kwargs   = {"width": D_r,
+                    "depth": 2,
+                    "freq": None,
+                    "seasonality_periods": None,
+                    "num_seasonal_harmonics": None,
+                    "feature_cols": [f"Space_{i}" for i in range(9)],
+                    "target_col": "Output",
+                    "observation_model": 'NORMAL',
+                    "timetype": 'float',
+                    "standardize":  None,
+                    "interactions": [(i, j) for i in range(1,len(feature_cols)) for j in range(1, len(feature_cols)) if i < j]}
+    data_gen_kwargs = {"dt": 1e-2, "train_size": int(2e5), "train_seed": np.random.randint(1e6), "test_num": 1}
+    train_kwargs = {'save_folder': f"{root}/autonomous", "epochs": 5000, "I": 4}
+    eval_kwargs = {"vpt_steps": 500, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
+                "Lyapunov_time": 1/2.27, "n_sample_w2": 20000}
+    return bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs 
+
+
+@ut.timer
+def run_batch(root, D_r=256, n_exprs=5, type="auto"):
+    for i in range(n_exprs):
+        if type == "auto":
+            run_single(*get_autonomous_params(root + f"_{i}", D_r=D_r))
+        else:
+            run_single(*get_nonautonomous_params(root + f"_{i}", D_r=D_r))
+    
