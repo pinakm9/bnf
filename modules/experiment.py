@@ -88,8 +88,8 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
 
 
 def get_autonomous_params(root, D_r=256):
-    data_gen_kwargs = {"dt": 1e-2, "train_size": int(2e5), "train_seed": np.random.randint(1e6), "test_num": 1}
     train_kwargs = {'save_folder': f"{root}/autonomous", "epochs": 5000, "I": 4}
+    data_gen_kwargs = {"dt": 1e-2, "train_size": int(2e5), "train_seed": np.random.randint(1e6), "test_num": 1}
     feature_cols = [f"Space_{i}" for i in range(2*train_kwargs["I"]+1)]
     bnf_kwargs   = {"width": D_r,
                     "depth": 2,
@@ -109,8 +109,7 @@ def get_autonomous_params(root, D_r=256):
 
 def get_nonautonomous_params(root, D_r=256):
     train_kwargs = {'save_folder': f"{root}/autonomous", "epochs": 5000, "I": 4}
-    eval_kwargs = {"vpt_steps": 500, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
-                "Lyapunov_time": 1/2.27, "n_sample_w2": 20000}
+    data_gen_kwargs = {"dt": 1e-2, "train_size": int(2e5), "train_seed": np.random.randint(1e6), "test_num": 1}
     feature_cols = ["Time"] + [f"Space_{i}" for i in range(2*train_kwargs["I"]+1)]
     bnf_kwargs   = {"width": D_r,
                     "depth": 2,
@@ -123,7 +122,9 @@ def get_nonautonomous_params(root, D_r=256):
                     "timetype": 'float',
                     "standardize":  None,
                     "interactions": [(i, j) for i in range(1,len(feature_cols)) for j in range(1, len(feature_cols)) if i < j]}
-    data_gen_kwargs = {"dt": 1e-2, "train_size": int(2e5), "train_seed": np.random.randint(1e6), "test_num": 1}
+    
+    eval_kwargs = {"vpt_steps": 500, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
+                "Lyapunov_time": 1/2.27, "n_sample_w2": 20000}
     return bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs 
 
 
