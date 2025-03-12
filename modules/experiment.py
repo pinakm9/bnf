@@ -33,24 +33,23 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     start = time.time()
     model = bayesnf.BayesianNeuralFieldMAP(**bnf_kwargs)
     df_train = pd.read_csv(f"{train_kwargs['save_folder']}/train.csv")
-    model_seed = jax.random.PRNGKey(0)
-    model.fit(df_train, seed=model_seed, num_epochs=train_kwargs["epochs"])
-    end = time.time()
+    model_seed = np.random.randint(100)
+    model.fit(df_train, seed=jax.random.PRNGKey(model_seed), num_epochs=train_kwargs["epochs"])
+    train_time = time.time() - start
+    print(f"Model trained for {train_time:.2f} seconds")
 
     # save model
     ut.save(model, os.path.abspath(f"{train_kwargs['save_folder']}/bnf_model"), step=train_kwargs["epochs"])
 
     # generate data for VPT
-    x = data[:, N:N+1]
+    x = data[:, N]
     Y = ev.multistep_forecast(model, 0, x, train_kwargs["I"], eval_kwargs["vpt_steps"], data_gen_kwargs["dt"])
-    Y = np.squeeze(Y, axis=-1).T
     np.save("{}/vpt_trajectory.npy".format(train_kwargs["save_folder"]), Y)
 
     # calculate VPT
     Y0 = data[:, N:N+eval_kwargs["vpt_steps"]]
-    # print((Y-Y0).shape, std.shape)
     l = np.argmax((((Y - Y0) / std[:, None])**2).sum(axis=0) < eval_kwargs["vpt_epsilon"]**2)
-    results["VPT"] = l * data_gen_kwargs["dt"] / eval_kwargs["Lyapunov_time"]
+    results["VPT"] = float(l * data_gen_kwargs["dt"] / eval_kwargs["Lyapunov_time"])
 
     # generate data for RMSE
     x = data[:, N:N+eval_kwargs["n_RMSE"]]
@@ -59,28 +58,29 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
 
     # calculate RMSE and MAE
     Y0 = data[:, N:N+eval_kwargs["n_RMSE"]]
-    results["RMSE"] = np.sqrt(np.mean(((Y - Y0)**2).sum(axis=0)))
-    results["MAE"] = np.mean(np.abs(Y - Y0).sum(axis=0))
+    results["RMSE"] = float(np.sqrt(np.mean(((Y - Y0)**2).sum(axis=0))))
+    results["MAE"] = float(np.mean(np.abs(Y - Y0).sum(axis=0)))
 
     # generate data for Wasserstein
-    x = data[:, N:N+1]
+    x = data[:, N]
     Y = ev.multistep_forecast(model, 0, x, train_kwargs["I"], eval_kwargs["w2_steps"], data_gen_kwargs["dt"])
-    Y = np.squeeze(Y, axis=-1).T
+    # Y = np.squeeze(Y, axis=-1).T
     np.save("{}/w2_trajectory.npy".format(train_kwargs["save_folder"]), Y)
 
     # calculate Wasserstein distance
     Y0 = data[:, N:]
     A = torch.tensor(Y.T[:eval_kwargs["n_sample_w2"]], dtype=torch.float32)
     B = torch.tensor(Y0.T[:eval_kwargs["n_sample_w2"]], dtype=torch.float32)
-    results["W2"] = wasserstein.sinkhorn_div(A, B).item()
+    results["W2"] = float(wasserstein.sinkhorn_div(A, B).item())
 
     # add model size and training time
-    results["training_time"] = end - start
+    results["training_time"] = float(train_time)
     results["model_size"] = int(ut.count_params(model))
-    results["experiment_seed"] = data_gen_kwargs["train_seed"]
-    # results["model_seed"] = model_seed
+    results["experiment_seed"] = int(data_gen_kwargs["train_seed"])
+    results["model_seed"] = int(model_seed)
 
     # save results
+    # print(results)
     with open(f"{train_kwargs['save_folder']}/results.json", "w") as f:
         json.dump(results, f, indent=2)
     
