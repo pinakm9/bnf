@@ -82,7 +82,16 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
 
     # save results
     with open(f"{train_kwargs['save_folder']}/results.json", "w") as f:
-        json.dump(results, f)
+        json.dump(results, f, indent=2)
+    
+    config = {}
+    config.update(bnf_kwargs)
+    config.update(data_gen_kwargs)
+    config.update(train_kwargs)
+    config.update(eval_kwargs)  
+
+    with open(f"{train_kwargs['save_folder']}/config.json", "w") as f:  
+        json.dump(config, f, indent=2)
 
 
 
@@ -105,6 +114,8 @@ def get_autonomous_params(root, D_r=256):
     eval_kwargs = {"vpt_steps": 500, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
                 "Lyapunov_time": 1/2.27, "n_sample_w2": 20000}
     return bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs
+
+
 
 
 def get_nonautonomous_params(root, D_r=256):
