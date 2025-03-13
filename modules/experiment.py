@@ -34,7 +34,7 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     model = bayesnf.BayesianNeuralFieldMAP(**bnf_kwargs)
     df_train = pd.read_csv(f"{train_kwargs['save_folder']}/train.csv")
     model_seed = np.random.randint(100)
-    model.fit(df_train, seed=jax.random.PRNGKey(model_seed), num_epochs=train_kwargs["epochs"])
+    model.fit(df_train, seed=jax.random.PRNGKey(model_seed), num_epochs=train_kwargs["epochs"], ensemble_size=train_kwargs["ensemble_size"])
     train_time = time.time() - start
     print(f"Model trained for {train_time:.2f} seconds")
 
