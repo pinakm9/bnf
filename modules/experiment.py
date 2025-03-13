@@ -24,7 +24,7 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     # prepare data
     data, _ = l96.gen_data(**data_gen_kwargs)
     N = int(data.shape[1]/2)
-    np.save("{}/train.npy".format(train_kwargs["save_folder"]), data[:, :N]) 
+    np.save("{}/data.npy".format(train_kwargs["save_folder"]), data) 
     # np.save("{}/test.npy".format(train_kwargs["save_folder"]), data[:, N:]) 
     convert.arr2csv(data[:, :N], index=0, I=train_kwargs["I"], t0=0, dt=data_gen_kwargs["dt"], filename=f"{train_kwargs['save_folder']}/train.csv")
     # del data

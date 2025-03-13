@@ -1,0 +1,181 @@
+{
+  "width": 256,
+  "depth": 2,
+  "freq": null,
+  "seasonality_periods": null,
+  "num_seasonal_harmonics": null,
+  "feature_cols": [
+    "Space_0",
+    "Space_1",
+    "Space_2",
+    "Space_3",
+    "Space_4",
+    "Space_5",
+    "Space_6",
+    "Space_7",
+    "Space_8"
+  ],
+  "target_col": "Output",
+  "observation_model": "NORMAL",
+  "timetype": "float",
+  "standardize": null,
+  "interactions": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      0,
+      4
+    ],
+    [
+      0,
+      5
+    ],
+    [
+      0,
+      6
+    ],
+    [
+      0,
+      7
+    ],
+    [
+      0,
+      8
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      1,
+      3
+    ],
+    [
+      1,
+      4
+    ],
+    [
+      1,
+      5
+    ],
+    [
+      1,
+      6
+    ],
+    [
+      1,
+      7
+    ],
+    [
+      1,
+      8
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      5
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      2,
+      7
+    ],
+    [
+      2,
+      8
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      3,
+      7
+    ],
+    [
+      3,
+      8
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      4,
+      6
+    ],
+    [
+      4,
+      7
+    ],
+    [
+      4,
+      8
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      5,
+      8
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      6,
+      8
+    ],
+    [
+      7,
+      8
+    ]
+  ],
+  "dt": 0.01,
+  "train_size": 200000,
+  "train_seed": 322090,
+  "test_num": 1,
+  "save_folder": "bnf/data/L96/autonomous-all-in",
+  "epochs": 50000,
+  "I": 4,
+  "vpt_steps": 100,
+  "n_RMSE": 100,
+  "w2_steps": 10,
+  "vpt_epsilon": 0.5,
+  "Lyapunov_time": 0.44052863436123346,
+  "n_sample_w2": 20000
+}
