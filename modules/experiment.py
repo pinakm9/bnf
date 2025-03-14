@@ -48,7 +48,7 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
 
     # calculate VPT
     Y0 = data[:, N:N+eval_kwargs["vpt_steps"]]
-    l = np.argmax((((Y - Y0) / std[:, None])**2).sum(axis=0) < eval_kwargs["vpt_epsilon"]**2)
+    l = np.argmax((((Y - Y0) / std[:, None])**2).sum(axis=0) > eval_kwargs["vpt_epsilon"]**2)
     results["VPT"] = float(l * data_gen_kwargs["dt"] / eval_kwargs["Lyapunov_time"])
 
     # generate data for RMSE
@@ -111,7 +111,7 @@ def get_autonomous_params(root, D_r=256):
                     "timetype": 'float',
                     "standardize":  None,
                     "interactions": [(i, j) for i in range(len(feature_cols)) for j in range(len(feature_cols)) if i < j]}
-    eval_kwargs = {"vpt_steps": 500, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
+    eval_kwargs = {"vpt_steps": 360, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
                 "Lyapunov_time": 1/2.27, "n_sample_w2": 20000}
     return bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs
 
