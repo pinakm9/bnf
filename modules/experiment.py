@@ -33,8 +33,7 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     start = time.time()
     model = bayesnf.BayesianNeuralFieldMAP(**bnf_kwargs)
     df_train = pd.read_csv(f"{train_kwargs['save_folder']}/train.csv")
-    model_seed = np.random.randint(100)
-    model.fit(df_train, seed=jax.random.PRNGKey(model_seed), num_epochs=train_kwargs["epochs"], ensemble_size=train_kwargs["ensemble_size"])
+    model.fit(df_train, seed=jax.random.PRNGKey(train_kwargs["model_seed"]), num_epochs=train_kwargs["epochs"], ensemble_size=train_kwargs["ensemble_size"])
     train_time = time.time() - start
     print(f"Model trained for {train_time:.2f} seconds")
 
@@ -43,7 +42,8 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
 
     # generate data for VPT
     x = data[:, N]
-    Y = ev.multistep_forecast(model, 0, x, train_kwargs["I"], eval_kwargs["vpt_steps"], data_gen_kwargs["dt"])
+    t = N * data_gen_kwargs["dt"]
+    Y = ev.multistep_forecast(model, t, x, train_kwargs["I"], eval_kwargs["vpt_steps"], data_gen_kwargs["dt"])
     np.save("{}/vpt_trajectory.npy".format(train_kwargs["save_folder"]), Y)
 
     # calculate VPT
@@ -53,7 +53,8 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
 
     # generate data for RMSE
     x = data[:, N:N+eval_kwargs["n_RMSE"]]
-    Y = ev.parallel_forecast(model, 0, x, train_kwargs["I"])
+    t = np.arange(N, N+eval_kwargs["n_RMSE"]) * data_gen_kwargs["dt"]
+    Y = ev.parallel_forecast(model, t, x, train_kwargs["I"])
     np.save("{}/rmse_trajectory.npy".format(train_kwargs["save_folder"]), Y)
 
     # calculate RMSE and MAE
@@ -63,7 +64,8 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
 
     # generate data for Wasserstein
     x = data[:, N]
-    Y = ev.multistep_forecast(model, 0, x, train_kwargs["I"], eval_kwargs["w2_steps"], data_gen_kwargs["dt"])
+    t = N * data_gen_kwargs["dt"]
+    Y = ev.multistep_forecast(model, t, x, train_kwargs["I"], eval_kwargs["w2_steps"], data_gen_kwargs["dt"])
     # Y = np.squeeze(Y, axis=-1).T
     np.save("{}/w2_trajectory.npy".format(train_kwargs["save_folder"]), Y)
 
@@ -77,7 +79,7 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     results["training_time"] = float(train_time)
     results["model_size"] = int(ut.count_params(model))
     results["experiment_seed"] = int(data_gen_kwargs["train_seed"])
-    results["model_seed"] = int(model_seed)
+    results["model_seed"] = int(train_kwargs["model_seed"])
 
     # save results
     # print(results)
@@ -111,7 +113,7 @@ def get_autonomous_params(root, D_r=256):
                     "timetype": 'float',
                     "standardize":  None,
                     "interactions": [(i, j) for i in range(len(feature_cols)) for j in range(len(feature_cols)) if i < j]}
-    eval_kwargs = {"vpt_steps": 360, "n_RMSE": 500, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
+    eval_kwargs = {"vpt_steps": 360, "n_RMSE": 10000, "w2_steps": int(1e5), "vpt_epsilon": 0.5,\
                 "Lyapunov_time": 1/2.27, "n_sample_w2": 20000}
     return bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs
 

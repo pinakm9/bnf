@@ -44,7 +44,7 @@ def parallel_forecast(model, t, x, I):
     D = len(x)
     indices = (np.arange(D)[:, None] + np.arange(-I, I + 1)) % D
     X = x[indices]
-    df_dict = {"Time": [t] * np.prod(x.shape)}
+    df_dict = {"Time": np.repeat(t, D)} #[t] * np.prod(x.shape)}
     df_dict.update({f"Space_{i}": X[:, i, :].flatten() for i in range(2*I+1)})
     yhat, _ = model.predict(pd.DataFrame(df_dict),  quantiles=())
     return yhat[0].mean(axis=0).reshape(x.shape)
