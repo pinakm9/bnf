@@ -24,7 +24,7 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     # prepare data
     data, _ = l96.gen_data(**data_gen_kwargs)
     N = int(data.shape[1]/2)
-    np.save("{}/data.npy".format(train_kwargs["save_folder"]), data) 
+    # np.save("{}/data.npy".format(train_kwargs["save_folder"]), data) 
     # np.save("{}/test.npy".format(train_kwargs["save_folder"]), data[:, N:]) 
     convert.arr2csv(data[:, :N], index=0, I=train_kwargs["I"], t0=0, dt=data_gen_kwargs["dt"], filename=f"{train_kwargs['save_folder']}/train.csv")
     # del data
@@ -56,11 +56,13 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     t = np.arange(N, N+eval_kwargs["n_RMSE"]) * data_gen_kwargs["dt"]
     Y = ev.parallel_forecast(model, t, x, train_kwargs["I"])
     np.save("{}/rmse_trajectory.npy".format(train_kwargs["save_folder"]), Y)
+    
 
     # calculate RMSE and MAE
     Y0 = data[:, N:N+eval_kwargs["n_RMSE"]]
     results["RMSE"] = float(np.sqrt(np.mean(((Y - Y0)**2).sum(axis=0))))
     results["MAE"] = float(np.mean(np.abs(Y - Y0).sum(axis=0)))
+    np.save("{}/rmse_true_trajectory.npy".format(train_kwargs["save_folder"]), Y0)
 
     # generate data for Wasserstein
     x = data[:, N]
@@ -95,6 +97,8 @@ def run_single(bnf_kwargs, data_gen_kwargs, train_kwargs, eval_kwargs):
     with open(f"{train_kwargs['save_folder']}/config.json", "w") as f:  
         json.dump(config, f, indent=2)
 
+    # delete train.csv
+    os.remove(f"{train_kwargs['save_folder']}/train.csv")
 
 
 
